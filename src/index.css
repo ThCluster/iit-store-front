@@ -1,2 +1,29 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "iitstore";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: #fafafa;
+  --color-base-200: #f5f5f5;
+  --color-base-300: #e5e5e5;
+  --color-base-content: #2b2d42;
+  --color-primary: #e63946;
+  --color-primary-content: #ffffff;
+  --color-secondary: #d62839;
+  --color-secondary-content: #ffffff;
+  --color-accent: #e63946;
+  --color-accent-content: #ffffff;
+  --color-neutral: #2b2d42;
+  --color-neutral-content: #ffffff;
+  --color-info: #3b82f6;
+  --color-info-content: #ffffff;
+  --color-success: #22c55e;
+  --color-success-content: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #ffffff;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
+}
