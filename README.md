@@ -912,3 +912,4 @@ Le projet est bien structuré mais **incomplet**. Voici les pistes d'améliorati
 ---
 
 🎉 **Félicitations !** Vous avez maintenant une vision complète de A à Z du projet `iit-store-front` : sa structure, chaque fichier, son code et ses configurations. Bon développement !
+# iit-store-front
