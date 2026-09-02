@@ -5,8 +5,16 @@ import { useAuth } from '@/features/auth/AuthContext'
 export function SellerHeader() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const { logout } = useAuth()
+  const { logout, profil } = useAuth()
   const navigate = useNavigate()
+
+  const profileName = profil
+    ? `${profil.first_name || ''} ${profil.last_name || ''}`.trim() || profil.username
+    : 'Ma boutique'
+  const profileEmail = profil?.email ?? ''
+  const profileInitial = profil
+    ? (profil.first_name || profil.username || 'V').charAt(0).toUpperCase()
+    : 'V'
 
   function handleLogout() {
     logout()
@@ -51,26 +59,14 @@ export function SellerHeader() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#e63946]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
               </svg>
-              <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#e63946] text-[10px] font-bold text-white">
-                3
-              </span>
             </button>
             {notifOpen && (
               <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-xl border border-base-200 bg-white p-2 shadow-lg">
                 <p className="px-3 py-2 text-sm font-semibold">Notifications</p>
                 <div className="space-y-1">
-                  <div className="rounded-lg bg-base-100 p-3">
-                    <p className="text-sm font-medium">Nouvelle commande</p>
-                    <p className="text-xs text-base-content/60">#CMD-2026-0842 · il y a 5 min</p>
-                  </div>
-                  <div className="rounded-lg bg-base-100 p-3">
-                    <p className="text-sm font-medium">Produit en rupture</p>
-                    <p className="text-xs text-base-content/60">Coque de protection · il y a 1 h</p>
-                  </div>
-                  <div className="rounded-lg bg-base-100 p-3">
-                    <p className="text-sm font-medium">Nouvel avis</p>
-                    <p className="text-xs text-base-content/60">5 étoiles · il y a 2 h</p>
-                  </div>
+                  <p className="rounded-lg bg-base-100 p-3 text-sm text-base-content/60">
+                    Aucune notification pour le moment.
+                  </p>
                 </div>
               </div>
             )}
@@ -88,18 +84,18 @@ export function SellerHeader() {
               aria-expanded={profileOpen}
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e63946] text-sm font-bold text-white">
-                T
+                {profileInitial}
               </div>
               <div className="hidden text-left sm:block">
-                <p className="text-sm font-semibold leading-tight">TechWorld</p>
+                <p className="text-sm font-semibold leading-tight">{profileName}</p>
                 <p className="text-xs text-base-content/60">Vendeur</p>
               </div>
             </button>
             {profileOpen && (
               <div className="absolute right-0 top-full z-30 mt-2 w-48 rounded-xl border border-base-200 bg-white p-2 shadow-lg">
                 <div className="border-b border-base-200 px-3 py-2">
-                  <p className="text-sm font-semibold">TechWorld</p>
-                  <p className="text-xs text-base-content/60">vendeur@techworld.com</p>
+                  <p className="text-sm font-semibold">{profileName}</p>
+                  <p className="text-xs text-base-content/60">{profileEmail}</p>
                 </div>
                 <Link
                   to="/seller-dashboard"

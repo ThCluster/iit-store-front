@@ -1,13 +1,17 @@
-import type { Product } from '@/types/product'
+import api from '@/services/api'
+import type { Product, Categorie } from '@/types/product'
 
 export async function getProducts(): Promise<Product[]> {
-  const res = await fetch('/api/products')
-  if (!res.ok) throw new Error('Erreur lors du chargement des produits')
-  return res.json()
+  const { data } = await api.get<Product[]>('/vendor/api/produits/')
+  return data
 }
 
-export async function getProductById(id: string): Promise<Product> {
-  const res = await fetch(`/api/products/${id}`)
-  if (!res.ok) throw new Error('Produit introuvable')
-  return res.json()
+export async function getProductById(id: string | number): Promise<Product> {
+  const { data } = await api.get<Product>(`/vendor/api/produits/${id}/`)
+  return data
+}
+
+export async function getCategories(): Promise<Categorie[]> {
+  const { data } = await api.get<Categorie[]>('/vendor/api/categories/')
+  return data
 }

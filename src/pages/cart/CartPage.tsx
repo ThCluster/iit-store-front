@@ -1,64 +1,64 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  imageUrl: string
-  quantity: number
-  seller: string
-}
-
-// Données de démonstration (à remplacer par le contexte panier)
-const demoCartItems: CartItem[] = [
-  {
-    id: 'p1',
-    name: 'Smartphone X200',
-    price: 299.99,
-    imageUrl: 'https://picsum.photos/seed/phone/200',
-    quantity: 1,
-    seller: 'TechWorld',
-  },
-  {
-    id: 'p2',
-    name: 'Casque Bluetooth',
-    price: 49.99,
-    imageUrl: 'https://picsum.photos/seed/headset/200',
-    quantity: 2,
-    seller: 'TechWorld',
-  },
-  {
-    id: 'p3',
-    name: 'Robe élégante',
-    price: 39.99,
-    imageUrl: 'https://picsum.photos/seed/dress/200',
-    quantity: 1,
-    seller: 'FashionHub',
-  },
-]
+import {
+  getPanier,
+  addToPanier,
+  removeFromPanier,
+} from '@/services/store'
+import type { PanierItem } from '@/types/store'
 
 export default function CartPage() {
-  const [items, setItems] = useState<CartItem[]>(demoCartItems)
+  const [items, setItems] = useState<PanierItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [promoCode, setPromoCode] = useState('')
 
-  function updateQuantity(id: string, delta: number) {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item,
-      ),
-    )
+  useEffect(() => {
+    getPanier()
+      .then((panier) => setItems(panier.items ?? []))
+      .catch(() => setError('Impossible de charger votre panier.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  function updateQuantity(id: number, delta: number) {
+    const item = items.find((i) => i.id === id)
+    if (!item) return
+    // Pas d'endpoint de patch par article : ajout/retrait par produit
+    if (delta > 0) {
+      addToPanier(item.product, delta).then((panier) =>
+        setItems(panier.items ?? []),
+      )
+    } else {
+      removeFromPanier(item.product, -delta).then((panier) =>
+        setItems(panier.items ?? []),
+      )
+    }
   }
 
-  function removeItem(id: string) {
-    setItems((prev) => prev.filter((item) => item.id !== id))
+  function removeItem(id: number) {
+    const item = items.find((i) => i.id === id)
+    setItems((prev) => prev.filter((i) => i.id !== id))
+    if (item) {
+      removeFromPanier(item.product, item.quantity).catch(() =>
+        setError("Erreur lors de la suppression."),
+      )
+    }
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const subtotal = items.reduce(
+    (sum, item) => sum + Number(item.sub_total ?? item.product_price ?? 0),
+    0,
+  )
   const shipping = subtotal > 0 ? 5.99 : 0
   const total = subtotal + shipping
+
+  if (loading) {
+    return <p className="container mx-auto px-4 py-8">Chargement du panier...</p>
+  }
+
+  if (error && items.length === 0) {
+    return <p className="container mx-auto px-4 py-8">{error}</p>
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -100,22 +100,19 @@ export default function CartPage() {
                 className="card card-side overflow-hidden bg-base-100 shadow-sm transition hover:shadow-md"
               >
                 <figure className="w-28 shrink-0 sm:w-40">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="h-full w-full object-cover"
-                  />
+                  <div className="flex h-full w-full items-center justify-center bg-base-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                    </svg>
+                  </div>
                 </figure>
                 <div className="card-body p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-semibold">{item.name}</h3>
+                      <h3 className="font-semibold">{item.product_name}</h3>
                       <div className="mt-1 flex items-center gap-2">
-                        <span className="badge badge-ghost badge-sm">
-                          {item.seller}
-                        </span>
                         <span className="text-sm font-bold text-primary">
-                          {Math.round(item.price).toLocaleString('fr-FR')} FCFA
+                          {Math.round(Number(item.product_price)).toLocaleString('fr-FR')} FCFA
                         </span>
                       </div>
                     </div>
@@ -154,7 +151,7 @@ export default function CartPage() {
                     </div>
 
                     <p className="text-lg font-black text-primary">
-                      {Math.round(item.price * item.quantity).toLocaleString('fr-FR')} FCFA
+                      {Math.round(Number(item.sub_total ?? item.product_price ?? 0) * item.quantity).toLocaleString('fr-FR')} FCFA
                     </p>
                   </div>
                 </div>

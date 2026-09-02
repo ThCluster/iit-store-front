@@ -11,4 +11,23 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      // Endpoints boutique (client)
+      '/store': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Endpoints vendeur
+      '/vendor': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Authentification DRF (session)
+      '/api-auth': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

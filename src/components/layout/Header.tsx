@@ -1,22 +1,36 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { demoCategories } from '@/features/products/demoData'
+import { useCategories } from '@/features/products'
 import { useAuth } from '@/features/auth/AuthContext'
+import { getPanier } from '@/services/store'
 
 export function Header() {
-  const [cartItems] = useState(0)
+  const { data: categories } = useCategories()
+  const [cartItems, setCartItems] = useState(0)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const { isLoggedIn, role, logout } = useAuth()
+  const { isLoggedIn, role, profil, logout } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      getPanier()
+        .then((panier) => setCartItems(panier.items?.length ?? 0))
+        .catch(() => setCartItems(0))
+    }
+  }, [isLoggedIn])
 
   const isSeller = role === 'seller'
   const dashboardPath = isSeller ? '/seller-dashboard' : '/dashboard'
-  const profileName = isSeller ? 'TechWorld' : 'Awa Koné'
-  const profileEmail = isSeller ? 'vendeur@techworld.com' : 'awa@exemple.com'
-  const profileInitial = isSeller ? 'T' : 'A'
+  const profileName = profil
+    ? `${profil.first_name || ''} ${profil.last_name || ''}`.trim() || profil.username
+    : 'Mon compte'
+  const profileEmail = profil?.email ?? ''
+  const profileInitial = profil
+    ? (profil.first_name || profil.username || 'A').charAt(0).toUpperCase()
+    : 'A'
 
   function handleLogout() {
     logout()
@@ -92,7 +106,7 @@ export function Header() {
                 aria-label="Catégorie"
               >
                 <option value="">Catégorie</option>
-                {demoCategories.map((cat) => (
+                {(categories ?? []).map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
@@ -209,7 +223,7 @@ export function Header() {
               aria-label="Catégorie"
             >
               <option value="">Catégorie</option>
-              {demoCategories.map((cat) => (
+              {(categories ?? []).map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>

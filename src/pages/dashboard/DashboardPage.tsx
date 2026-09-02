@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '@/features/auth/AuthContext'
+import { getCommandes } from '@/services/store'
+import type { Commande } from '@/types/store'
 
 type Section = 'overview' | 'orders' | 'favorites' | 'reviews' | 'addresses' | 'settings'
 
@@ -35,6 +38,14 @@ export default function DashboardPage() {
 
 export function DashboardLayout() {
   const [section, setSection] = useState<Section>('overview')
+  const { profil } = useAuth()
+  const profileName = profil
+    ? `${profil.first_name || ''} ${profil.last_name || ''}`.trim() || profil.username
+    : 'Mon compte'
+  const profileEmail = profil?.email ?? ''
+  const profileInitial = profil
+    ? (profil.first_name || profil.username || 'A').charAt(0).toUpperCase()
+    : 'A'
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,31 +58,27 @@ export function DashboardLayout() {
               <div className="mb-4 border-b border-base-200 pb-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-                    A
+                    {profileInitial}
                   </div>
                   <div>
-                    <p className="font-semibold">Awa Koné</p>
-                    <p className="text-xs text-base-content/60">awa@exemple.com</p>
+                    <p className="font-semibold">{profileName}</p>
+                    <p className="text-xs text-base-content/60">{profileEmail}</p>
                   </div>
                 </div>
                 <div className="mt-3 space-y-1.5 text-sm">
-                  <div className="flex items-center gap-2 text-base-content/70">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                    </svg>
-                    +225 07 00 00 00 00
-                  </div>
-                  <div className="flex items-center gap-2 text-base-content/70">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                    </svg>
-                    Abidjan, Côte d'Ivoire
-                  </div>
+                  {profil?.telephone && (
+                    <div className="flex items-center gap-2 text-base-content/70">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                      </svg>
+                      {profil.telephone}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-base-content/70">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                     </svg>
-                    Acheteur
+                    {profil?.role ?? 'Acheteur'}
                   </div>
                 </div>
               </div>
@@ -127,16 +134,25 @@ export function DashboardLayout() {
 }
 
 function Overview() {
+  const { profil } = useAuth()
+  const [commandes, setCommandes] = useState<Commande[]>([])
+  useEffect(() => {
+    getCommandes().then(setCommandes).catch(() => setCommandes([]))
+  }, [])
+
   const stats = [
-    { label: 'Commandes', value: '12', icon: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z' },
+    { label: 'Commandes', value: String(commandes.length), icon: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z' },
     { label: 'Favoris', value: '8', icon: 'M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z' },
     { label: 'Avis laissés', value: '5', icon: 'M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z' },
-    { label: 'Livraisons', value: '2', icon: 'M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12' },
+    { label: 'Livraisons', value: String(commandes.length), icon: 'M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12' },
   ]
+
+  const firstName = profil?.first_name || profil?.username || ''
+  const lastCommande = commandes[0]
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-black">Bonjour, Awa !</h1>
+      <h1 className="mb-6 text-2xl font-black">Bonjour, {firstName} !</h1>
       <p className="mb-6 text-sm text-base-content/60">
         Bienvenue dans votre espace client. Voici un aperçu de votre activité.
       </p>
@@ -162,13 +178,24 @@ function Overview() {
       <div className="card mt-6 bg-base-100 shadow-sm">
         <div className="card-body">
           <h2 className="card-title text-base">Dernière commande</h2>
-          <div className="mt-3 flex items-center justify-between rounded-xl bg-base-200 p-4">
-            <div>
-              <p className="font-semibold">#CMD-2026-0842</p>
-              <p className="text-sm text-base-content/60">12 août 2026</p>
+          {lastCommande ? (
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-base-200 p-4">
+              <div>
+                <p className="font-semibold">#{lastCommande.number}</p>
+                <p className="text-sm text-base-content/60">
+                  {Math.round(lastCommande.total).toLocaleString('fr-FR')} FCFA ·{' '}
+                  {lastCommande.lignes?.length ?? 0} article(s)
+                </p>
+              </div>
+              <span className="badge badge-success badge-outline">
+                {lastCommande.statut}
+              </span>
             </div>
-            <span className="badge badge-success badge-outline">Livrée</span>
-          </div>
+          ) : (
+            <p className="mt-3 text-sm text-base-content/60">
+              Aucune commande pour le moment.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -177,48 +204,28 @@ function Overview() {
 
 function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [orders, setOrders] = useState<Order[]>([])
 
-  const orders: Order[] = [
-    {
-      id: '#CMD-2026-0842',
-      date: '12 août 2026',
-      total: '405 960 FCFA',
-      status: 'Livrée',
-      items: 3,
-      payment: 'Mobile Money',
-      address: 'Cocody, Riviera 3, Abidjan, Côte d\'Ivoire',
-      products: [
-        { name: 'Smartphone X200', qty: 1, price: '299 990 FCFA' },
-        { name: 'Casque Bluetooth', qty: 2, price: '99 980 FCFA' },
-        { name: 'Coque de protection', qty: 1, price: '5 990 FCFA' },
-      ],
-    },
-    {
-      id: '#CMD-2026-0791',
-      date: '28 juillet 2026',
-      total: '89 990 FCFA',
-      status: 'En cours',
-      items: 1,
-      payment: 'Carte bancaire',
-      address: 'Plateau, Avenue Chardy, Abidjan, Côte d\'Ivoire',
-      products: [
-        { name: 'Robe élégante', qty: 1, price: '89 990 FCFA' },
-      ],
-    },
-    {
-      id: '#CMD-2026-0654',
-      date: '15 juin 2026',
-      total: '150 000 FCFA',
-      status: 'Annulée',
-      items: 2,
-      payment: 'Espèces',
-      address: 'Cocody, Riviera 3, Abidjan, Côte d\'Ivoire',
-      products: [
-        { name: 'Canapé moderne', qty: 1, price: '120 000 FCFA' },
-        { name: 'Table basse', qty: 1, price: '30 000 FCFA' },
-      ],
-    },
-  ]
+  useEffect(() => {
+    getCommandes().then((cmds) => {
+      setOrders(
+        cmds.map((c) => ({
+          id: c.number ? `#${c.number}` : `#${c.id}`,
+          date: '-',
+          total: `${Math.round(c.total).toLocaleString('fr-FR')} FCFA`,
+          status: c.statut || '-',
+          items: c.lignes?.length ?? 0,
+          payment: '-',
+          address: c.destination || '-',
+          products: (c.lignes ?? []).map((l) => ({
+            name: l.product_name || `Produit #${l.product_id}`,
+            qty: l.quantity,
+            price: `${Math.round(Number(l.unit_price ?? 0)).toLocaleString('fr-FR')} FCFA`,
+          })),
+        })),
+      )
+    }).catch(() => setOrders([]))
+  }, [])
 
   const statusClass: Record<string, string> = {
     'Livrée': 'badge-success',
@@ -347,7 +354,7 @@ function Favorites() {
       <h1 className="mb-6 text-2xl font-black">Mes favoris</h1>
       <div className="card bg-base-100 shadow-sm">
         <div className="card-body">
-          <p className="text-base-content/60">Vous avez 8 produits en favoris.</p>
+          <p className="text-base-content/60">Aucun favori pour le moment.</p>
           <Link to="/favorites" className="btn btn-primary btn-sm mt-4 w-fit">
             Voir mes favoris
           </Link>
@@ -358,63 +365,56 @@ function Favorites() {
 }
 
 function Reviews() {
-  const reviews = [
-    { product: 'Smartphone X200', rating: 5, comment: 'Excellent produit, livraison rapide !' },
-    { product: 'Casque Bluetooth', rating: 4, comment: 'Très bon son, confortable.' },
-  ]
-
   return (
     <div>
       <h1 className="mb-6 text-2xl font-black">Mes avis</h1>
-      <div className="space-y-4">
-        {reviews.map((review) => (
-          <div key={review.product} className="card bg-base-100 shadow-sm">
-            <div className="card-body p-5">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold">{review.product}</p>
-                <div className="flex gap-0.5 text-warning">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${i < review.rating ? '' : 'opacity-30'}`} viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-              <p className="mt-2 text-sm text-base-content/70">{review.comment}</p>
-            </div>
-          </div>
-        ))}
+      <div className="card bg-base-100 shadow-sm">
+        <div className="card-body">
+          <p className="text-base-content/60">Aucun avis pour le moment.</p>
+        </div>
       </div>
     </div>
   )
 }
 
 function Addresses() {
-  const addresses = [
-    { label: 'Domicile', detail: 'Cocody, Riviera 3, Abidjan, Côte d\'Ivoire' },
-    { label: 'Bureau', detail: 'Plateau, Avenue Chardy, Abidjan, Côte d\'Ivoire' },
-  ]
+  const addresses: { label: string; detail: string }[] = []
 
   return (
     <div>
       <h1 className="mb-6 text-2xl font-black">Mes adresses</h1>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {addresses.map((addr) => (
-          <div key={addr.label} className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <p className="font-semibold">{addr.label}</p>
-              <p className="text-sm text-base-content/60">{addr.detail}</p>
-              <button className="btn btn-outline btn-sm mt-3 w-fit">Modifier</button>
-            </div>
+      {addresses.length === 0 ? (
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body">
+            <p className="text-base-content/60">Aucune adresse enregistrée.</p>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {addresses.map((addr) => (
+            <div key={addr.label} className="card bg-base-100 shadow-sm">
+              <div className="card-body">
+                <p className="font-semibold">{addr.label}</p>
+                <p className="text-sm text-base-content/60">{addr.detail}</p>
+                <button className="btn btn-outline btn-sm mt-3 w-fit">Modifier</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       <button className="btn btn-primary mt-4">Ajouter une adresse</button>
     </div>
   )
 }
 
 function Settings() {
+  const { profil } = useAuth()
+  const name = profil
+    ? `${profil.first_name || ''} ${profil.last_name || ''}`.trim() || profil.username
+    : ''
+  const email = profil?.email ?? ''
+  const phone = profil?.telephone ?? ''
+
   return (
     <div>
       <h1 className="mb-6 text-2xl font-black">Réglages</h1>
@@ -424,19 +424,19 @@ function Settings() {
             <label className="label">
               <span className="label-text">Nom complet</span>
             </label>
-            <input type="text" defaultValue="Awa Koné" className="input input-bordered w-full" />
+            <input type="text" defaultValue={name} className="input input-bordered w-full" />
           </div>
           <div className="form-control">
             <label className="label">
               <span className="label-text">E-mail</span>
             </label>
-            <input type="email" defaultValue="awa@exemple.com" className="input input-bordered w-full" />
+            <input type="email" defaultValue={email} className="input input-bordered w-full" />
           </div>
           <div className="form-control">
             <label className="label">
               <span className="label-text">Téléphone</span>
             </label>
-            <input type="tel" defaultValue="+225 07 00 00 00 00" className="input input-bordered w-full" />
+            <input type="tel" defaultValue={phone} className="input input-bordered w-full" />
           </div>
           <button className="btn btn-primary mt-2">Enregistrer</button>
         </div>

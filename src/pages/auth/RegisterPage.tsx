@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/AuthContext'
+import { register as apiRegister, login as apiLogin, getProfil } from '@/services/auth'
 
 type Role = 'buyer' | 'seller'
 
@@ -11,15 +12,36 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [shopName, setShopName] = useState('')
-  const [shopLogo, setShopLogo] = useState('')
-  const { login } = useAuth()
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { loginWithProfile } = useAuth()
   const navigate = useNavigate()
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    // TODO: appeler l'API d'inscription avec le rôle choisi
-    login(role)
-    navigate(role === 'seller' ? '/seller-dashboard' : '/products')
+    setLoading(true)
+    setError('')
+    const [firstLast = '', ...rest] = name.trim().split(/\s+/)
+    const last = rest.join(' ')
+    try {
+      await apiRegister({
+        username: email,
+        email,
+        first_name: firstLast,
+        last_name: last || undefined,
+        telephone: phone,
+        password,
+        password_confirmation: password,
+      })
+      await apiLogin(email, password)
+      const profil = await getProfil()
+      loginWithProfile(profil)
+      navigate(role === 'seller' ? '/seller-dashboard' : '/products')
+    } catch (err) {
+      setError("L'inscription a échoué. Vérifiez vos informations et réessayez.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -132,22 +154,6 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {/* Logo de la boutique (vendeur uniquement) */}
-              {role === 'seller' && (
-                <div className="form-control">
-                  <label className="label" htmlFor="shopLogo">
-                    <span className="label-text">Logo de la boutique</span>
-                  </label>
-                  <input
-                    id="shopLogo"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setShopLogo(e.target.files?.[0]?.name ?? '')}
-                    className="file-input file-input-bordered file-input-primary w-full"
-                  />
-                </div>
-              )}
-
               {/* Email */}
               <div className="form-control">
                 <label className="label" htmlFor="email">
@@ -181,9 +187,18 @@ export default function RegisterPage() {
               </div>
 
               {/* Bouton */}
-              <button type="submit" className="btn btn-primary btn-block">
-                {role === 'seller' ? 'Créer ma boutique' : 'Créer mon compte'}
+              <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                {loading
+                  ? 'Création...'
+                  : role === 'seller'
+                    ? 'Créer ma boutique'
+                    : 'Créer mon compte'}
               </button>
+
+              {/* Erreur */}
+              {error && (
+                <p className="text-center text-sm font-medium text-error">{error}</p>
+              )}
             </form>
 
             {/* Séparateur */}

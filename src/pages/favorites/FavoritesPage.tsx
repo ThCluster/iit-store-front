@@ -10,44 +10,11 @@ interface FavoriteItem {
   rating: number
 }
 
-// Données de démonstration (à remplacer par l'API favoris)
-const demoFavorites: FavoriteItem[] = [
-  {
-    id: 'p1',
-    name: 'Smartphone X200',
-    price: 299990,
-    imageUrl: 'https://picsum.photos/seed/phone/400',
-    seller: 'TechWorld',
-    rating: 4.5,
-  },
-  {
-    id: 'p2',
-    name: 'Casque Bluetooth',
-    price: 49990,
-    imageUrl: 'https://picsum.photos/seed/headset/400',
-    seller: 'TechWorld',
-    rating: 4.2,
-  },
-  {
-    id: 'p3',
-    name: 'Robe élégante',
-    price: 39990,
-    imageUrl: 'https://picsum.photos/seed/dress/400',
-    seller: 'FashionHub',
-    rating: 4.8,
-  },
-  {
-    id: 'p4',
-    name: 'Canapé moderne',
-    price: 450000,
-    imageUrl: 'https://picsum.photos/seed/sofa/400',
-    seller: 'HomeDecor',
-    rating: 4.6,
-  },
-]
+// Liste des favoris : vide tant que l'endpoint favoris n'est pas connecté
+const EMPTY_FAVORITES: FavoriteItem[] = []
 
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>(demoFavorites)
+  const [favorites, setFavorites] = useState<FavoriteItem[]>(EMPTY_FAVORITES)
 
   function removeFavorite(id: string) {
     setFavorites((prev) => prev.filter((item) => item.id !== id))

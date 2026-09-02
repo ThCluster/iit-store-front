@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom'
-import { useProducts, ProductCard, CategoryIcon } from '@/features/products'
-import { demoCategories, demoSellers, demoReviews } from '@/features/products/demoData'
+import { useProducts, useCategories, ProductCard, CategoryIcon } from '@/features/products'
 
 export default function HomePage() {
   const { data: products, isLoading } = useProducts()
+  const { data: categories } = useCategories()
+
+  // Vendeurs dérivés des produits réels (dédoublonnés par nom)
+  const sellers = (products ?? [])
+    .map((p) => p.vendeur_nom)
+    .filter((n): n is string => Boolean(n))
+  const uniqueSellers = sellers.filter(
+    (name, i, arr) => arr.findIndex((x) => x === name) === i,
+  )
 
   return (
     <div>
@@ -72,14 +80,14 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {demoCategories.map((cat) => (
+          {(categories ?? []).map((cat) => (
             <Link
               key={cat.id}
               to={`/products?category=${cat.id}`}
-              className={`card ${cat.color} shadow-sm transition hover:-translate-y-1 hover:shadow-md`}
+              className="card bg-base-200 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
               <div className="card-body items-center text-center">
-                <CategoryIcon icon={cat.icon} className="h-10 w-10 text-primary" />
+                <CategoryIcon icon={cat.slug} className="h-10 w-10 text-primary" />
                 <h3 className="card-title text-sm">{cat.name}</h3>
               </div>
             </Link>
@@ -123,46 +131,6 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* ===== AVIS CLIENTS ===== */}
-      <section className="container mx-auto px-4 pb-16">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold">Avis clients</h2>
-          <p className="mt-2 text-base-content/60">Ce que pensent nos clients de la marketplace</p>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {demoReviews.map((review) => (
-            <div key={review.id} className="card bg-base-100 shadow-sm">
-              <div className="card-body">
-                <div className="flex items-center gap-3">
-                  <div className="avatar placeholder">
-                    <div className="w-12 rounded-full bg-primary/10 text-lg font-bold text-primary">
-                      {review.author.charAt(0)}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{review.author}</h3>
-                    <div className="flex items-center gap-1 text-warning">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <svg
-                          key={i}
-                          xmlns="http://www.w3.org/2000/svg"
-                          className={`h-4 w-4 ${i < review.rating ? '' : 'opacity-30'}`}
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="mt-3 text-sm text-base-content/70">{review.comment}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ===== VENDEURS DE CONFIANCE ===== */}
       <section className="container mx-auto px-4 pb-16">
         <div className="mb-8 text-center">
@@ -170,22 +138,15 @@ export default function HomePage() {
           <p className="mt-2 text-base-content/60">Des marchands vérifiés et notés par la communauté</p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {demoSellers.map((seller) => (
-            <div key={seller.id} className="card bg-base-100 shadow-sm">
+          {uniqueSellers.map((sellerName) => (
+            <div key={sellerName} className="card bg-base-100 shadow-sm">
               <div className="card-body items-center text-center">
                 <div className="avatar placeholder">
                   <div className="w-16 rounded-full bg-primary/10 text-3xl">
-                    {seller.logo}
+                    {sellerName.charAt(0).toUpperCase()}
                   </div>
                 </div>
-                <h3 className="card-title">{seller.name}</h3>
-                <div className="flex items-center gap-1 text-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="font-semibold">{seller.rating}</span>
-                  <span className="text-base-content/50">· {seller.productsCount} produits</span>
-                </div>
+                <h3 className="card-title">{sellerName}</h3>
                 <Link to="/products" className="btn btn-outline btn-sm mt-2">
                   Voir la boutique
                 </Link>

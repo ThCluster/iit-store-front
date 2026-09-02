@@ -1,5 +1,6 @@
 import type { Product } from '@/types/product'
 import { Link } from 'react-router-dom'
+import { addToPanier } from '@/services/store'
 
 export function ProductCard({ product }: { product: Product }) {
   return (
@@ -7,31 +8,27 @@ export function ProductCard({ product }: { product: Product }) {
       to={`/products/${product.id}`}
       className="card bg-base-100 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
     >
-      <figure className="relative">
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="aspect-square w-full object-cover"
-        />
+      <figure className="relative flex h-40 items-center justify-center bg-base-200">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+        </svg>
         <span className="badge badge-secondary absolute left-3 top-3">Nouveau</span>
       </figure>
       <div className="card-body p-4">
-        <h3 className="card-title text-base">{product.name}</h3>
-        <div className="flex items-center gap-1 text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          <span className="text-base-content/60">(4.5)</span>
-        </div>
+        <h3 className="card-title text-base line-clamp-1">{product.name}</h3>
+        {product.vendeur_nom && (
+          <p className="text-xs text-base-content/60">{product.vendeur_nom}</p>
+        )}
         <div className="mt-2 flex items-center justify-between">
           <p className="text-lg font-semibold text-primary">
-            {Math.round(product.price).toLocaleString('fr-FR')} FCFA
+            {Math.round(Number(product.price)).toLocaleString('fr-FR')} FCFA
           </p>
           <button
             className="btn btn-primary btn-sm"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
+              addToPanier(product.id).catch(() => void e)
             }}
           >
             Ajouter

@@ -1,5 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { getPanier, createCommande } from '@/services/store'
+import { useAuth } from '@/features/auth/AuthContext'
+import type { PanierItem } from '@/types/store'
 
 type PaymentMethod = 'card' | 'mobile_money' | 'cash' | 'transfer'
 
@@ -10,8 +13,8 @@ const paymentMethods: { id: PaymentMethod; label: string; description: string }[
   { id: 'transfer', label: 'Virement', description: 'Virement bancaire' },
 ]
 
-// Données de démonstration (à remplacer par l'API django-cities-light)
-const demoCountries: { code: string; name: string; cities: string[] }[] = [
+// Catalogue des pays et villes (statique, à remplacer par l'API django-cities-light)
+const countries: { code: string; name: string; cities: string[] }[] = [
   {
     code: 'CI',
     name: 'Côte d\'Ivoire',
@@ -53,15 +56,68 @@ export default function CheckoutPage() {
   const [mobileNumber, setMobileNumber] = useState('')
   const [mobileOperator, setMobileOperator] = useState('orange')
   const [success, setSuccess] = useState(false)
+  const [items, setItems] = useState<PanierItem[]>([])
 
-  const selectedCountry = demoCountries.find((c) => c.code === country)
+  const selectedCountry = countries.find((c) => c.code === country)
   const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
 
-  function handleSubmit(e: FormEvent) {
+  if (!isLoggedIn) {
+    return (
+      <div className="container mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="text-2xl font-black">Connexion requise</h1>
+        <p className="mt-2 text-base-content/60">
+          Vous devez être connecté pour passer une commande.
+        </p>
+        <Link to="/login" className="btn btn-primary mt-6">
+          Se connecter
+        </Link>
+      </div>
+    )
+  }
+
+  useEffect(() => {
+    getPanier()
+      .then((panier) => setItems(panier.items ?? []))
+      .catch(() => setItems([]))
+  }, [])
+
+  const total = items.reduce(
+    (sum, item) => sum + Number(item.sub_total ?? item.product_price ?? 0),
+    0,
+  )
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    // TODO: envoyer la commande à l'API
-    setSuccess(true)
-    setTimeout(() => navigate('/products'), 2500)
+    try {
+      const destination = `${address}, ${city}, ${selectedCountry?.name ?? ''}`
+      const commande = await createCommande({
+        destination,
+        lignes: items.map((item) => ({
+          product_id: item.product,
+          quantity: item.quantity,
+        })),
+      })
+      // Stocke la commande pour la page de confirmation
+      sessionStorage.setItem(
+        'last_commande',
+        JSON.stringify({
+          number: commande.number,
+          destination,
+          mode: payment,
+          total: commande.total,
+          items: items.map((item) => ({
+            name: item.product_name,
+            quantity: item.quantity,
+            price: item.product_price,
+          })),
+        }),
+      )
+      setSuccess(true)
+      setTimeout(() => navigate('/order-confirmation'), 1500)
+    } catch {
+      setSuccess(false)
+    }
   }
 
   return (
@@ -120,7 +176,7 @@ export default function CheckoutPage() {
                     className="select select-bordered w-full"
                     required
                   >
-                    {demoCountries.map((c) => (
+                    {countries.map((c) => (
                       <option key={c.code} value={c.code}>
                         {c.name}
                       </option>
@@ -312,37 +368,29 @@ export default function CheckoutPage() {
             <div className="card-body">
               <h2 className="card-title text-lg">Récapitulatif</h2>
               <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-3">
-                  <img
-                    src="https://picsum.photos/seed/phone/60"
-                    alt="Smartphone X200"
-                    className="h-14 w-14 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold">Smartphone X200</p>
-                    <p className="text-xs text-base-content/60">x1</p>
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-base-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{item.product_name}</p>
+                      <p className="text-xs text-base-content/60">x{item.quantity}</p>
+                    </div>
+                    <span className="text-sm font-bold">
+                      {Math.round(Number(item.product_price)).toLocaleString('fr-FR')} FCFA
+                    </span>
                   </div>
-                  <span className="text-sm font-bold">299 990 FCFA</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <img
-                    src="https://picsum.photos/seed/headset/60"
-                    alt="Casque Bluetooth"
-                    className="h-14 w-14 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold">Casque Bluetooth</p>
-                    <p className="text-xs text-base-content/60">x2</p>
-                  </div>
-                  <span className="text-sm font-bold">99 980 FCFA</span>
-                </div>
+                ))}
               </div>
 
               <div className="divider" />
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-base-content/60">Sous-total</span>
-                  <span className="font-semibold">399 970 FCFA</span>
+                  <span className="font-semibold">{Math.round(total).toLocaleString('fr-FR')} FCFA</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-base-content/60">Livraison</span>
@@ -352,7 +400,7 @@ export default function CheckoutPage() {
               <div className="divider" />
               <div className="flex items-center justify-between">
                 <span className="font-bold">Total</span>
-                <span className="text-xl font-black text-primary">405 960 FCFA</span>
+                <span className="text-xl font-black text-primary">{Math.round(total + 5990).toLocaleString('fr-FR')} FCFA</span>
               </div>
 
               <button type="submit" className="btn btn-primary btn-block mt-6">

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useProducts, ProductCard, CategoryIcon } from '@/features/products'
-import { demoCategories } from '@/features/products/demoData'
+import { useProducts, useCategories, ProductCard, CategoryIcon } from '@/features/products'
 
 export default function ProductsPage() {
   const { data: products, isLoading, error } = useProducts()
+  const { data: categories } = useCategories()
   const [searchParams, setSearchParams] = useSearchParams()
   const [sort, setSort] = useState('relevance')
 
@@ -21,7 +21,8 @@ export default function ProductsPage() {
   // Filtrage par catégorie et recherche
   let filtered = products ?? []
   if (activeCategory) {
-    filtered = filtered.filter((p) => p.id.includes(activeCategory))
+    const catId = Number(activeCategory)
+    filtered = filtered.filter((p) => p.categorie.id === catId)
   }
   if (query) {
     filtered = filtered.filter((p) =>
@@ -30,8 +31,10 @@ export default function ProductsPage() {
   }
 
   // Tri
-  if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price)
-  if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price)
+  if (sort === 'price-asc')
+    filtered = [...filtered].sort((a, b) => Number(a.price) - Number(b.price))
+  if (sort === 'price-desc')
+    filtered = [...filtered].sort((a, b) => Number(b.price) - Number(a.price))
 
   if (isLoading) return <p className="container mx-auto px-4 py-8">Chargement...</p>
   if (error) return <p className="container mx-auto px-4 py-8">Erreur de chargement</p>
@@ -68,18 +71,18 @@ export default function ProductsPage() {
                   </span>
                   Tous les produits
                 </button>
-                {demoCategories.map((cat) => (
+                {(categories ?? []).map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() => setCategory(cat.id)}
+                    onClick={() => setCategory(String(cat.id))}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
-                      activeCategory === cat.id
+                      activeCategory === String(cat.id)
                         ? 'bg-primary/10 font-semibold text-primary'
                         : 'hover:bg-base-200'
                     }`}
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-base-200">
-                      <CategoryIcon icon={cat.icon} className="h-4 w-4" />
+                      <CategoryIcon icon={cat.slug} className="h-4 w-4" />
                     </span>
                     {cat.name}
                   </button>
@@ -95,7 +98,7 @@ export default function ProductsPage() {
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-base-content/60">
               {activeCategory
-                ? demoCategories.find((c) => c.id === activeCategory)?.name
+                ? (categories ?? []).find((c) => String(c.id) === activeCategory)?.name
                 : 'Tous les produits'}
             </p>
             <select

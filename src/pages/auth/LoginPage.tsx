@@ -1,18 +1,30 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/AuthContext'
+import { login as apiLogin, getProfil } from '@/services/auth'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const { login } = useAuth()
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { loginWithProfile } = useAuth()
   const navigate = useNavigate()
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    // TODO: appeler l'API d'authentification
-    login('buyer')
-    navigate('/products')
+    setLoading(true)
+    setError('')
+    try {
+      await apiLogin(email, password)
+      const profil = await getProfil()
+      loginWithProfile(profil)
+      navigate(profil.role === 'vendeur' ? '/seller-dashboard' : '/products')
+    } catch {
+      setError('Identifiants incorrects. Veuillez réessayer.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -79,9 +91,14 @@ export default function LoginPage() {
               </div>
 
               {/* Bouton */}
-              <button type="submit" className="btn btn-primary btn-block">
-                Se connecter
+              <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                {loading ? 'Connexion...' : 'Se connecter'}
               </button>
+
+              {/* Erreur */}
+              {error && (
+                <p className="text-center text-sm font-medium text-error">{error}</p>
+              )}
             </form>
 
             {/* Séparateur */}
