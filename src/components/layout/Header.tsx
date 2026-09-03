@@ -1,26 +1,20 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCategories } from '@/features/products'
 import { useAuth } from '@/features/auth/AuthContext'
-import { getPanier } from '@/services/store'
+import { useCart } from '@/features/cart/CartContext'
+import { useFavoris } from '@/features/favoris/FavorisContext'
 
 export function Header() {
   const { data: categories } = useCategories()
-  const [cartItems, setCartItems] = useState(0)
+  const { count: cartItems } = useCart()
+  const { count: favCount } = useFavoris()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const { isLoggedIn, role, profil, logout } = useAuth()
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      getPanier()
-        .then((panier) => setCartItems(panier.items?.length ?? 0))
-        .catch(() => setCartItems(0))
-    }
-  }, [isLoggedIn])
 
   const isSeller = role === 'seller'
   const dashboardPath = isSeller ? '/seller-dashboard' : '/dashboard'
@@ -144,6 +138,11 @@ export function Header() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#e63946]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
+              {favCount > 0 && (
+                <div className="absolute -right-1 -top-1 rounded-full bg-secondary px-1.5 py-0.5 text-xs font-semibold text-secondary-content">
+                  {favCount}
+                </div>
+              )}
             </Link>
 
             {/* Profil / Avatar */}

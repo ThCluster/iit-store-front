@@ -5,6 +5,7 @@ import {
   addToPanier,
   removeFromPanier,
 } from '@/services/store'
+import { useCart } from '@/features/cart/CartContext'
 import type { PanierItem } from '@/types/store'
 
 export default function CartPage() {
@@ -12,6 +13,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [promoCode, setPromoCode] = useState('')
+  const { refresh } = useCart()
 
   useEffect(() => {
     getPanier()
@@ -25,13 +27,15 @@ export default function CartPage() {
     if (!item) return
     // Pas d'endpoint de patch par article : ajout/retrait par produit
     if (delta > 0) {
-      addToPanier(item.product, delta).then((panier) =>
-        setItems(panier.items ?? []),
-      )
+      addToPanier(item.product, delta).then((panier) => {
+        setItems(panier.items ?? [])
+        refresh()
+      })
     } else {
-      removeFromPanier(item.product, -delta).then((panier) =>
-        setItems(panier.items ?? []),
-      )
+      removeFromPanier(item.product, -delta).then((panier) => {
+        setItems(panier.items ?? [])
+        refresh()
+      })
     }
   }
 
@@ -39,9 +43,9 @@ export default function CartPage() {
     const item = items.find((i) => i.id === id)
     setItems((prev) => prev.filter((i) => i.id !== id))
     if (item) {
-      removeFromPanier(item.product, item.quantity).catch(() =>
-        setError("Erreur lors de la suppression."),
-      )
+      removeFromPanier(item.product, item.quantity)
+        .then(() => refresh())
+        .catch(() => setError("Erreur lors de la suppression."))
     }
   }
 
@@ -100,11 +104,19 @@ export default function CartPage() {
                 className="card card-side overflow-hidden bg-base-100 shadow-sm transition hover:shadow-md"
               >
                 <figure className="w-28 shrink-0 sm:w-40">
-                  <div className="flex h-full w-full items-center justify-center bg-base-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                    </svg>
-                  </div>
+                  {item.product_image ? (
+                    <img
+                      src={item.product_image}
+                      alt={item.product_name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-base-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                      </svg>
+                    </div>
+                  )}
                 </figure>
                 <div className="card-body p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-2">

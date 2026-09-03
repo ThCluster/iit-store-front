@@ -44,6 +44,7 @@ export async function getCommandes(): Promise<Commande[]> {
 export async function createCommande(payload: {
   destination: string
   lignes: { product_id: number; quantity: number }[]
+  mode_reglement?: number
 }): Promise<Commande> {
   const { data } = await api.post<Commande>('/store/api/commande/', payload)
   return data

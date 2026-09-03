@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { SellerLayout } from '@/components/layout/SellerLayout'
-// import { ProtectedRoute } from '@/features/auth'
+import { ProtectedRoute } from '@/features/auth'
 
 const HomePage = lazy(() => import('@/pages/home/HomePage'))
 const ProductsPage = lazy(() => import('@/pages/boutique/product/ProductsPage'))
@@ -33,11 +33,14 @@ export const router = createBrowserRouter([
       { path: 'favorites', element: withSuspense(<FavoritesPage />) },
       { path: 'checkout', element: withSuspense(<CheckoutPage />) },
       { path: 'order-confirmation', element: withSuspense(<OrderConfirmationPage />) },
-      { path: 'dashboard', element: withSuspense(<DashboardPage />) },
-      // {
-      //   path: 'dashboard',
-      //   element: <ProtectedRoute>{withSuspense(<DashboardPage />)}</ProtectedRoute>,
-      // },
+      {
+        path: 'dashboard',
+        element: (
+          <ProtectedRoute role="buyer">
+            {withSuspense(<DashboardPage />)}
+          </ProtectedRoute>
+        ),
+      },
       { path: '*', element: withSuspense(<NotFoundPage />) },
     ],
   },
@@ -45,7 +48,14 @@ export const router = createBrowserRouter([
     path: '/seller-dashboard',
     element: <SellerLayout />,
     children: [
-      { index: true, element: withSuspense(<SellerDashboardPage />) },
+      {
+        index: true,
+        element: (
+          <ProtectedRoute role="seller">
+            {withSuspense(<SellerDashboardPage />)}
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
   {

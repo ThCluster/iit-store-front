@@ -91,8 +91,16 @@ export default function CheckoutPage() {
     e.preventDefault()
     try {
       const destination = `${address}, ${city}, ${selectedCountry?.name ?? ''}`
+      // Mapping des modes de paiement frontend vers les ids backend
+      const modeMap: Record<string, number> = {
+        card: 1,
+        mobile_money: 2,
+        cash: 3,
+        transfer: 4,
+      }
       const commande = await createCommande({
         destination,
+        mode_reglement: modeMap[payment],
         lignes: items.map((item) => ({
           product_id: item.product,
           quantity: item.quantity,
@@ -110,6 +118,7 @@ export default function CheckoutPage() {
             name: item.product_name,
             quantity: item.quantity,
             price: item.product_price,
+            image: item.product_image,
           })),
         }),
       )
@@ -370,11 +379,19 @@ export default function CheckoutPage() {
               <div className="mt-4 space-y-2">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center gap-3">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-base-200">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                      </svg>
-                    </div>
+                    {item.product_image ? (
+                      <img
+                        src={item.product_image}
+                        alt={item.product_name}
+                        className="h-14 w-14 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-base-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                        </svg>
+                      </div>
+                    )}
                     <div className="flex-1">
                       <p className="text-sm font-semibold">{item.product_name}</p>
                       <p className="text-xs text-base-content/60">x{item.quantity}</p>

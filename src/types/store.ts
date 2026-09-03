@@ -4,6 +4,7 @@ export interface PanierItem {
   product: number
   product_name: string
   product_price: string | number
+  product_image: string
   quantity: number
   sub_total: string | number
 }
@@ -26,6 +27,7 @@ export interface LigneCommande {
   product_id: number
   unit_price: string | number
   product_name: string
+  product_image: string
 }
 
 export interface Commande {

@@ -18,6 +18,7 @@ export interface Product {
   name: string
   price: number | string
   description: string
+  image: string
   vendeur: number
   vendeur_nom: string | null
   categorie: Categorie

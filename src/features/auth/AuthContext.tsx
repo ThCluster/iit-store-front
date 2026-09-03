@@ -6,6 +6,7 @@ type Role = 'buyer' | 'seller'
 
 interface AuthContextType {
   isLoggedIn: boolean
+  loading: boolean
   role: Role
   profil: Profil | null
   login: (role: Role) => void
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [role, setRole] = useState<Role>('buyer')
   const [profil, setProfil] = useState<Profil | null>(null)
 
@@ -37,6 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfil(null)
           setIsLoggedIn(false)
         })
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
     }
   }, [])
 
@@ -49,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfil(p)
     setRole((p.role === 'vendeur' ? 'seller' : 'buyer') as Role)
     setIsLoggedIn(true)
+    setLoading(false)
     // Fusionne le panier anonyme (session) dans le panier du profil
     fusionnerPanier().catch(() => {
       /* silencieux : pas de panier à fusionner */
@@ -61,11 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfil(null)
     setIsLoggedIn(false)
     setRole('buyer')
+    setLoading(false)
   }
 
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn, role, profil, login, loginWithProfile, logout }}
+      value={{ isLoggedIn, loading, role, profil, login, loginWithProfile, logout }}
     >
       {children}
     </AuthContext.Provider>

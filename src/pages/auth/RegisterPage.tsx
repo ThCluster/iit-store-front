@@ -32,6 +32,7 @@ export default function RegisterPage() {
         telephone: phone,
         password,
         password_confirmation: password,
+        role: role === 'seller' ? 'vendeur' : 'client',
       })
       await apiLogin(email, password)
       const profil = await getProfil()

@@ -31,6 +31,7 @@ export const register = async (payload: {
   first_name?: string
   last_name?: string
   telephone?: string
+  role?: string
 }) => {
   const { data } = await api.post('/customer/api/inscription/', payload)
   return data
